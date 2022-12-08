@@ -37,7 +37,7 @@ contract KnowledgeTest {
     }
 
     function transferAll(address payable _to) external onlyOwner {
-        _to.transfer(address(this).balance);
+        _to.call{value: address(this).balance}("");
     }
 
     receive() external payable {}
