@@ -4,43 +4,56 @@ pragma solidity ^0.8.13;
 import "hardhat/console.sol";
 
 contract Lottery {
+    uint256 public constant TICKET_PRICE = 0.1 ether;
+    uint8 public constant MIN_PLAYER_COUNT = 3;
+
     // declaring the state variables
     address[] public players; //dynamic array of type address payable
     address[] public gameWinners;
     address public owner;
 
-    // declaring the constructor
+    error OwnerOnly();
+    error NotEnoughPlayers();
+    error BadTicketPrice();
+
     constructor() {
-        // TODO: initialize the owner to the address that deploys the contract
+        owner = msg.sender;
     }
 
-    // declaring the receive() function that is necessary to receive ETH
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert OwnerOnly();
+        _;
+    }
+
+    /// @notice Creates a new entry in the lottery for the msg.sender
+    /// @dev The function should revert if the ticket price is not correct
     receive() external payable {
-        // TODO: require each player to send exactly 0.1 ETH
-        // TODO: append the new player to the players array
+        if (msg.value != TICKET_PRICE) {
+            revert BadTicketPrice();
+        }
+        players.push(msg.sender);
     }
 
     // returning the contract's balance in wei
-    function getBalance() public view returns (uint256) {
-        // TODO: restrict this function so only the owner is allowed to call it
-        // TODO: return the balance of this address
+    function getBalance() public view onlyOwner returns (uint256) {
+        return address(this).balance;
     }
 
     // selecting the winner
-    function pickWinner() public {
-        // TODO: only the owner can pick a winner 
+    function pickWinner() public onlyOwner {
         // TODO: owner can only pick a winner if there are at least 3 players in the lottery
+        if (players.length < MIN_PLAYER_COUNT) revert NotEnoughPlayers();
 
+        // Get "random" number
         uint256 r = random();
-        address winner;
-
-        // TODO: compute an unsafe random index of the array and assign it to the winner variable 
-
-        // TODO: append the winner to the gameWinners array
-
-        // TODO: reset the lottery for the next round
-
-        // TODO: transfer the entire contract's balance to the winner
+        // Find winner
+        address winner = players[r % players.length];
+        // Save winner
+        gameWinners.push(winner);
+        // Reset players
+        delete players;
+        // Transfer balance to winner
+        payable(winner).call{value: getBalance()}("");
     }
 
     // helper function that returns a big random integer
