@@ -21,7 +21,7 @@ contract Lottery {
     }
 
     modifier onlyOwner() {
-        if (msg.sender != owner) revert OwnerOnly();
+        require(msg.sender == owner, "ONLY_OWNER");
         _;
     }
 
@@ -41,8 +41,7 @@ contract Lottery {
 
     // selecting the winner
     function pickWinner() public onlyOwner {
-        // TODO: owner can only pick a winner if there are at least 3 players in the lottery
-        if (players.length < MIN_PLAYER_COUNT) revert NotEnoughPlayers();
+        require(players.length >= MIN_PLAYER_COUNT, "NOT_ENOUGH_PLAYERS");
 
         // Get "random" number
         uint256 r = random();
